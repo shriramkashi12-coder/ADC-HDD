@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhinava Archive | Single File Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --surface-color: #111111;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --accent-yellow: #ffcc33;
+            --drive-highlight: #4db8ff;
+            --border-color: #222222;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .search-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+            margin-top: 15vh;
+        }
+
+        .searching .search-wrapper {
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .brand-container {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .brand-name {
+            font-size: 3.5rem;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            font-weight: 600;
+            line-height: 1;
+            color: var(--accent-yellow);
+            text-shadow: 0 4px 20px rgba(255, 204, 51, 0.2);
+            margin: 0;
+        }
+
+        .sub-brand {
+            font-size: 1rem;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            font-weight: 400;
+            color: var(--accent-yellow);
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 15px;
+        }
+
+        #searchBox {
+            flex: 1;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 14px;
+            font-size: 1.2rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #searchBox:focus { border-color: var(--accent-yellow); }
+
+        #alphabetFilter {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--accent-yellow);
+            padding: 0 25px;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            outline: none;
+            font-weight: 600;
+        }
+
+        .btn {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0 20px;
+            border-radius: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover { border-color: var(--text-primary); }
+        .btn-primary { background-color: var(--accent-yellow); color: black; border-color: var(--accent-yellow); }
+        .btn-primary:hover { background-color: white; border-color: white; color: black; }
+        
+        /* --- VIEW / ADMIN MODE STYLES --- */
+        .mode-toggle {
+            position: fixed; top: 20px; right: 25px; z-index: 1001;
+            background-color: var(--surface-color); border: 1px solid var(--accent-yellow); color: var(--accent-yellow);
+            padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .mode-toggle:hover { background-color: var(--accent-yellow); color: black; }
+        
+        .admin-only { display: none !important; }
+        body.admin-mode .admin-only { display: inline-block !important; }
+
+        .btn-success { 
+            background-color: #28a745; color: white; border-color: #28a745; 
+            position: fixed; top: 70px; right: 25px; /* Moved down to fit under toggle */
+            z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .btn-success:hover { background-color: #218838; border-color: #218838; transform: translateY(-2px); }
+
+        /* --- ADD FORM UI --- */
+        .add-form-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            display: none;
+            box-sizing: border-box;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--accent-yellow); font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
+        .form-input {
+            width: 100%; box-sizing: border-box; background-color: black; border: 1px solid var(--border-color);
+            color: white; padding: 15px; border-radius: 10px; font-size: 1rem; font-family: 'Inter', sans-serif; outline: none;
+        }
+        .form-input:focus { border-color: var(--accent-yellow); }
+        textarea.form-input { resize: vertical; min-height: 100px; }
+        
+        .form-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 20px; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .results-container {
+            width: 100%;
+            max-width: 850px;
+            padding: 0 20px 100px;
+        }
+
+        .item-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .item-title {
+            font-weight: 600;
+            color: var(--accent-yellow);
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 15px;
+        }
+
+        .path-item {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            padding: 8px 12px;
+            word-break: break-all;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .path-item:hover { color: white; background-color: #1a1a1a; padding-left: 18px; }
+
+        .drive-label {
+            color: var(--drive-highlight);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            margin-top: 25px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drive-label::before {
+            content: ''; width: 4px; height: 16px; background-color: var(--drive-highlight); border-radius: 10px;
+        }
+
+        mark.search-highlight { background-color: var(--accent-yellow); color: black; font-weight: 600; }
+        .no-results { text-align: center; color: var(--text-secondary); margin-top: 100px; }
+    </style>
+</head>
+<body id="mainBody" class="">
+
+<button id="modeToggleBtn" class="mode-toggle" onclick="toggleMode()">Switch to Admin Mode</button>
+
+<div class="search-wrapper">
+    <div class="brand-container">
+        <div class="brand-name">ABHINAVA</div>
+        <div class="sub-brand">HARD DISK DATABASE</div>
+    </div>
+    
+    <div class="controls">
+        <input type="text" id="searchBox" placeholder="Search production or file path..." autocomplete="off">
+        <select id="alphabetFilter"><option value="">A - Z</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option><option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select>
+        <button class="btn admin-only" onclick="toggleAddForm()" id="toggleFormBtn">+ Add Item</button>
+        <button class="btn btn-success admin-only" onclick="downloadUpdatedFile()" id="downloadBtn">↓ Download Updated DB</button>
+    </div>
+
+    <div class="add-form-container" id="addForm" style="display: none;">
+        <div class="form-group">
+            <label>Item Name (Production / Event)</label>
+            <input type="text" id="newItemName" class="form-input" placeholder="e.g. Dance Karma 2026">
+        </div>
+        <div class="form-group">
+            <label>Hard disk Name</label>
+            <input type="text" id="newHarddisk" class="form-input" placeholder="e.g. Vyasa">
+        </div>
+        <div class="form-group">
+            <label>Paths (One path per line)</label>
+            <textarea id="newPath" class="form-input" placeholder="/Volumes/Vyasa/Dance Karma 2026
+/Volumes/Vyasa/DK26_Raw_Footage"></textarea>
+        </div>
+        <div class="form-actions">
+            <button class="btn" onclick="toggleAddForm()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveNewRecord()">Save to List</button>
+        </div>
+    </div>
+    <div class="add-form-container" id="editForm" style="border-color: #4db8ff;">
+        <div class="form-group">
+            <label style="color: #4db8ff;">✎ Edit Item Name</label>
+            <input type="text" id="editItemName" class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label style="color: #4db8ff;">Existing Drives & Paths (Update & Delete Only)</label>
+            <div id="editDrivesContainer" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="form-actions">
+            <button class="btn" onclick="closeEditForm()">Cancel</button>
+            <button class="btn btn-primary" style="background-color: #4db8ff; border-color: #4db8ff;" onclick="saveEditRecord()">Update Item</button>
+        </div>
+    </div>
+</div>
+
+<div class="results-container" id="resultsArea"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+  // YOUR SAVED KEYS
+  const firebaseConfig = {
+      apiKey: "AIzaSyBHKagLEDLHrHLEqGS5n1T6pUROGx9-X90",
+      authDomain: "abhinava-archive-db.firebaseapp.com",
+      projectId: "abhinava-archive-db",
+      storageBucket: "abhinava-archive-db.firebasestorage.app",
+      messagingSenderId: "295464692324",
+      appId: "1:295464692324:web:94b7c227f339b2a6d0cd71"
+  };
+
+  const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // This makes Firebase available to the rest of your app
+    window.db = db;
+    window.auth = auth;
+    window.fs = { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, signInWithEmailAndPassword, signOut };
+</script>
+
+<script id="logic-script">
+  let archiveData = []; // Starts empty, fills from the cloud!
+
+  let isAdminMode = false;
+
+    // Listen to Firebase to verify security status
+    setTimeout(() => {
+        if (!window.auth) return;
+        window.auth.onAuthStateChanged((user) => {
+            const body = document.getElementById('mainBody');
+            const toggleBtn = document.getElementById('modeToggleBtn');
+            
+            if (user) {
+                isAdminMode = true;
+                body.classList.add('admin-mode');
+                toggleBtn.innerText = "Logout Admin";
+                toggleBtn.style.backgroundColor = "var(--accent-yellow)";
+                toggleBtn.style.color = "black";
+            } else {
+                isAdminMode = false;
+                body.classList.remove('admin-mode');
+                toggleBtn.innerText = "Switch to Admin Mode";
+                toggleBtn.style.backgroundColor = "var(--surface-color)";
+                toggleBtn.style.color = "var(--accent-yellow)";
+                
+                document.getElementById('addForm').style.display = 'none';
+                if (document.getElementById('editForm')) document.getElementById('editForm').style.display = 'none';
+            }
+        });
+    }, 1500);
+
+    async function toggleMode() {
+        if (isAdminMode) {
+            // Log out securely
+            await window.fs.signOut(window.auth);
+        } else {
+            // Log in securely
+            const pwd = prompt("Enter Admin Password:");
+            if (pwd) {
+                try {
+                    // Secretly pairs the password with the dummy email
+                    await window.fs.signInWithEmailAndPassword(window.auth, "admin@abhinava.com", pwd);
+                } catch (error) {
+                    alert("Incorrect Password!");
+                }
+            }
+        }
+    }
+
+  // --- REAL-TIME CLOUD LISTENER ---
+  setTimeout(() => {
+      if (!window.fs) return;
+      
+      const colRef = window.fs.collection(window.db, "archiveItems");
+      
+      window.fs.onSnapshot(colRef, (snapshot) => {
+          archiveData = [];
+          snapshot.forEach((cloudDoc) => {
+              const data = cloudDoc.data();
+              archiveData.push({
+                  id: cloudDoc.id,
+                  "A": data.itemName,
+                  "Hard disk": data.driveData
+              });
+          });
+          
+          archiveData.sort((a, b) => {
+              const nameA = a.A ? a.A.toUpperCase() : "";
+              const nameB = b.A ? b.A.toUpperCase() : "";
+              return nameA.localeCompare(nameB);
+          });
+
+          executeSearch(); 
+      });
+  }, 1000);
+
+  // --- SEARCH ENGINE LOGIC ---
+  const select = document.getElementById('alphabetFilter');
+  for(let i=65; i<=90; i++) {
+      let char = String.fromCharCode(i);
+      let opt = document.createElement('option');
+      opt.value = char; opt.innerHTML = char;
+      select.appendChild(opt);
+  }
+
+  function executeSearch() {
+      const query = document.getElementById('searchBox').value.toLowerCase();
+      const alpha = document.getElementById('alphabetFilter').value;
+      const container = document.getElementById('resultsArea');
+      const body = document.getElementById('mainBody');
+
+      if (query || alpha) body.classList.add('searching');
+      else { body.classList.remove('searching'); container.innerHTML = ""; return; }
+
+      const filtered = archiveData.filter(item => {
+          if (!item.A || item.A.length <= 1) return false;
+          const content = (item.A + " " + (item["Hard disk"] || "")).toLowerCase();
+          return (!query || content.includes(query)) && (!alpha || item.A.toUpperCase().startsWith(alpha));
+      });
+
+      if (filtered.length === 0) {
+          container.innerHTML = `<div class="no-results">No records found.</div>`;
+          return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+          const lines = (item["Hard disk"] || "").split('\n').map(l => l.trim()).filter(l => l !== "");
+          const originalIndex = archiveData.indexOf(item);
+          
+          return `
+              <div class="item-card">
+                  <div class="item-title">
+                      ${item.A}
+                      <button class="btn admin-only" style="float: right; padding: 4px 10px; font-size: 0.8rem; border-color: #ff4d4d; color: #ff4d4d; margin-left: 8px;" onclick="deleteItem(${originalIndex})">✖ Delete</button>
+                      <button class="btn admin-only" style="float: right; padding: 4px 10px; font-size: 0.8rem; margin-left: 8px;" onclick="openEditForm(${originalIndex})">✎ Edit</button>
+                      <button class="btn admin-only" style="float: right; padding: 4px 10px; font-size: 0.8rem; border-color: var(--accent-yellow); color: var(--accent-yellow);" onclick="addHardDisk(${originalIndex})">+ Add Hard Disk</button>
+                  </div>
+                  <div class="path-list">
+                      ${lines.map((line) => {
+                          const isPath = line.includes('/') || line.includes('\\');
+                          
+                          if (!isPath) {
+                              const safeLine = line.replace(/'/g, "\\'").trim();
+                              return `
+                              <div class="drive-label">
+                                  ${line.trim()}
+                                  <button class="btn admin-only" style="padding: 2px 8px; font-size: 0.7rem; border-color: #4db8ff; color: #4db8ff; margin-left: 15px; background: transparent;" onclick="addPathToDrive(${originalIndex}, '${safeLine}')">+ Add Path Here</button>
+                              </div>`;
+                          } else {
+                              return `<div class="path-item" onclick="copyToClipboard('${line.replace(/'/g, "\\'")}')">${line}</div>`;
+                          }
+                      }).join('')}
+                  </div>
+              </div>
+          `;
+      }).join('');
+      applyHighlight(query);
+  }
+
+  function applyHighlight(term) {
+      if (!term) return;
+      const container = document.getElementById('resultsArea');
+      const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      function walk(node) {
+          if (node.nodeType === 3) {
+              if (node.data.match(regex)) {
+                  const span = document.createElement('span');
+                  span.innerHTML = node.data.replace(regex, '<mark class="search-highlight">$1</mark>');
+                  node.parentNode.replaceChild(span, node);
+              }
+          } else if (node.nodeType === 1 && !['SCRIPT', 'STYLE'].includes(node.tagName)) {
+              Array.from(node.childNodes).forEach(walk);
+          }
+      }
+      walk(container);
+  }
+
+  function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+          const feedback = document.createElement('div');
+          feedback.style = "position:fixed; bottom:20px; background:#ffcc33; color:black; padding:10px 20px; border-radius:50px; font-weight:600; z-index:1000;";
+          feedback.innerText = "Path Copied!";
+          document.body.appendChild(feedback);
+          setTimeout(() => feedback.remove(), 2000);
+      });
+  }
+
+  // --- CLOUD UI LOGIC ---
+
+  async function deleteItem(index) {
+      const item = archiveData[index];
+      if (confirm(`Are you sure you want to delete "${item.A}"? This will permanently remove it from the cloud.`)) {
+          const docRef = window.fs.doc(window.db, "archiveItems", item.id);
+          await window.fs.deleteDoc(docRef);
+      }
+  }
+
+  async function addHardDisk(index) {
+      const item = archiveData[index];
+      const newDrive = prompt(`Enter new Hard Disk name for "${item.A}":`);
+      
+      if (newDrive && newDrive.trim() !== "") {
+          const safeDrive = newDrive.replace(/[\/\\]/g, '').trim(); 
+          let updatedDriveData = item["Hard disk"] ? (item["Hard disk"] + `\n${safeDrive}`) : safeDrive;
+          
+          const docRef = window.fs.doc(window.db, "archiveItems", item.id);
+          await window.fs.updateDoc(docRef, { driveData: updatedDriveData });
+      }
+  }
+
+  async function addPathToDrive(index, driveName) {
+      const item = archiveData[index];
+      const newPath = prompt(`Paste the new path to add under "${driveName}":`);
+      
+      if (newPath && newPath.trim() !== "") {
+          let finalPath = newPath.trim();
+          if (!finalPath.includes('/') && !finalPath.includes('\\')) {
+              finalPath = "/" + finalPath; 
+          }
+
+          const lines = (item["Hard disk"] || "").split('\n');
+          let driveFoundIndex = -1;
+          
+          for (let i = 0; i < lines.length; i++) {
+              if (lines[i].trim() === driveName) { driveFoundIndex = i; break; }
+          }
+          
+          if (driveFoundIndex !== -1) {
+              let insertIndex = driveFoundIndex + 1;
+              while (insertIndex < lines.length && (lines[insertIndex].includes('/') || lines[insertIndex].includes('\\') || lines[insertIndex].trim() === '')) {
+                  insertIndex++;
+              }
+              
+              lines.splice(insertIndex, 0, `  ${finalPath}`);
+              
+              const docRef = window.fs.doc(window.db, "archiveItems", item.id);
+              await window.fs.updateDoc(docRef, { driveData: lines.join('\n') });
+          }
+      }
+  }
+
+  let currentEditIndex = -1;
+
+  function openEditForm(index) {
+      currentEditIndex = index;
+      const item = archiveData[index];
+      
+      document.getElementById('editItemName').value = item.A || '';
+      
+      const container = document.getElementById('editDrivesContainer');
+      container.innerHTML = ''; 
+      
+      const lines = (item["Hard disk"] || "").split('\n').map(l => l.trim()).filter(l => l !== "");
+      let currentDriveNode = null;
+      
+      lines.forEach(line => {
+          const isPath = line.includes('/') || line.includes('\\');
+          if (!isPath) {
+              currentDriveNode = renderDriveInEdit(line);
+              container.appendChild(currentDriveNode);
+          } else {
+              if (!currentDriveNode) {
+                  currentDriveNode = renderDriveInEdit("Unknown Drive");
+                  container.appendChild(currentDriveNode);
+              }
+              renderPathInEdit(currentDriveNode, line);
+          }
+      });
+      
+      document.getElementById('addForm').style.display = 'none'; 
+      document.getElementById('editForm').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderDriveInEdit(driveName) {
+      const driveGroup = document.createElement('div');
+      driveGroup.className = 'edit-drive-group';
+      driveGroup.style = "border: 1px solid #333; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #0a0a0a;";
+      
+      const safeName = driveName.replace(/"/g, '&quot;');
+      
+      driveGroup.innerHTML = `
+          <div style="display: flex; gap: 10px; margin-bottom: 12px; align-items: center;">
+              <label style="color: #4db8ff; margin: 0; min-width: 70px;">DRIVE</label>
+              <input type="text" class="form-input drive-input" value="${safeName}" style="flex: 1; border-color: #4db8ff; color: #4db8ff; font-weight: bold; padding: 8px;">
+              <button class="btn admin-only" style="border-color: #ff4d4d; color: #ff4d4d; padding: 6px 15px;" onclick="removeDriveFromEdit(this)">✖ Delete Drive</button>
+          </div>
+          <div class="paths-container" style="padding-left: 15px; border-left: 2px solid #333; margin-left: 30px;"></div>
+      `;
+      return driveGroup;
+  }
+
+  function renderPathInEdit(driveGroup, pathValue) {
+      const pathsContainer = driveGroup.querySelector('.paths-container');
+      const row = document.createElement('div');
+      row.style = "display: flex; gap: 10px; margin-bottom: 8px; align-items: center;";
+      
+      const safePath = pathValue.replace(/"/g, '&quot;');
+      
+      row.innerHTML = `
+          <label style="color: var(--text-secondary); margin: 0; font-size: 0.8rem; min-width: 40px;">Path</label>
+          <input type="text" class="form-input path-input" value="${safePath}" style="flex: 1; padding: 8px; font-size: 0.9rem;">
+          <button class="btn admin-only" style="border-color: #ff4d4d; color: #ff4d4d; padding: 6px 12px;" onclick="this.parentElement.remove()">✖</button>
+      `;
+      pathsContainer.appendChild(row);
+  }
+
+  function removeDriveFromEdit(btnElement) {
+      const driveGroup = btnElement.closest('.edit-drive-group');
+      const pathsCount = driveGroup.querySelectorAll('.path-input').length;
+      
+      if (pathsCount > 0) {
+          alert("⚠️ You cannot delete a Hard Disk that still has paths attached. Please delete the paths first using their ✖ buttons.");
+          return;
+      }
+      driveGroup.remove();
+  }
+
+  function closeEditForm() {
+      document.getElementById('editForm').style.display = 'none';
+      currentEditIndex = -1;
+  }
+
+  async function saveEditRecord() {
+      if (currentEditIndex === -1) return;
+      
+      const item = archiveData[currentEditIndex];
+      const name = document.getElementById('editItemName').value.trim();
+      if(!name) { alert("Item Name is required!"); return; }
+
+      const driveGroups = document.querySelectorAll('.edit-drive-group');
+      let combinedLines = [];
+      let validationFailed = false;
+      
+      driveGroups.forEach(group => {
+          const driveInput = group.querySelector('.drive-input');
+          const driveName = driveInput.value.replace(/[\/\\]/g, '').trim(); 
+          if (!driveName) {
+              alert("⚠️ You cannot leave a Hard Disk name blank. Use the '✖ Delete Drive' button to remove it.");
+              validationFailed = true;
+              return;
+          }
+          combinedLines.push(driveName);
+          
+          const pathInputs = group.querySelectorAll('.path-input');
+          pathInputs.forEach(input => {
+              let pathVal = input.value.trim();
+              if (!pathVal) {
+                  alert("⚠️ You cannot leave a path blank. Use the '✖' button next to the path to remove it.");
+                  validationFailed = true;
+                  return;
+              }
+              if (!pathVal.includes('/') && !pathVal.includes('\\')) { pathVal = "/" + pathVal; }
+              combinedLines.push("  " + pathVal);
+          });
+      });
+
+      if (validationFailed) return; 
+
+      // Send surgical update directly to the cloud document
+      const docRef = window.fs.doc(window.db, "archiveItems", item.id);
+      await window.fs.updateDoc(docRef, {
+          itemName: name,
+          driveData: combinedLines.join('\n')
+      });
+
+      closeEditForm();
+  }
+
+  function toggleAddForm() {
+      const form = document.getElementById('addForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+  }
+
+  async function saveNewRecord() {
+      const name = document.getElementById('newItemName').value.trim();
+      const drive = document.getElementById('newHarddisk').value.trim();
+      const paths = document.getElementById('newPath').value.trim();
+
+      if(!name) {
+          alert("Item Name is required!");
+          return;
+      }
+
+      const combinedText = drive + (paths ? "\n  " + paths.split('\n').join('\n ') : "");
+
+      const colRef = window.fs.collection(window.db, "archiveItems");
+      await window.fs.addDoc(colRef, {
+          itemName: name,
+          driveData: combinedText
+      });
+
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newHarddisk').value = '';
+      document.getElementById('newPath').value = '';
+      toggleAddForm();
+      
+      document.getElementById('searchBox').value = name;
+      document.getElementById('alphabetFilter').value = '';
+  }
+
+  document.getElementById('searchBox').addEventListener('input', executeSearch);
+  document.getElementById('alphabetFilter').addEventListener('change', executeSearch);
+</script>
+</body>
+</html>
