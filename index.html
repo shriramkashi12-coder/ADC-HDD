@@ -689,6 +689,181 @@
   }
 
   document.getElementById('searchBox').addEventListener('input', executeSearch);
+    
+  // --- DOWNLOAD UPDATED OFFLINE DATABASE ---
+  async function downloadUpdatedFile() {
+      try {
+          const button = document.getElementById('downloadBtn');
+
+          if (!isAdminMode) {
+              alert("Please log in as Admin first.");
+              return;
+          }
+
+          if (!Array.isArray(archiveData) || archiveData.length === 0) {
+              alert("No database records loaded yet. Please wait for Firebase to load.");
+              return;
+          }
+
+          button.disabled = true;
+          button.textContent = "Preparing Download...";
+
+          // Create a clean copy of the current page.
+          const htmlClone = document.documentElement.cloneNode(true);
+
+          // Reset search results and forms in the downloaded file.
+          const results = htmlClone.querySelector('#resultsArea');
+          if (results) results.innerHTML = '';
+
+          const searchBox = htmlClone.querySelector('#searchBox');
+          if (searchBox) searchBox.value = '';
+
+          const alphabetFilter = htmlClone.querySelector('#alphabetFilter');
+          if (alphabetFilter) alphabetFilter.value = '';
+
+          const body = htmlClone.querySelector('#mainBody');
+          if (body) {
+              body.classList.remove('searching');
+              body.classList.remove('admin-mode');
+          }
+
+          const addForm = htmlClone.querySelector('#addForm');
+          if (addForm) addForm.style.display = 'none';
+
+          const editForm = htmlClone.querySelector('#editForm');
+          if (editForm) editForm.style.display = 'none';
+
+          // Replace the live Firebase application scripts with a
+          // self-contained offline database script.
+          const firebaseScript = htmlClone.querySelector('script[type="module"]');
+          if (firebaseScript) firebaseScript.remove();
+
+          const logicScript = htmlClone.querySelector('#logic-script');
+          if (!logicScript) {
+              throw new Error("Could not find the logic-script element.");
+          }
+
+          // Export a snapshot of the current Firestore data.
+          const offlineData = archiveData.map(item => ({
+              A: item.A || "",
+              "Hard disk": item["Hard disk"] || ""
+          }));
+
+          // Replace the online logic with the local database.
+          logicScript.textContent = `
+              let archiveData = ${JSON.stringify(offlineData)};
+              let isAdminMode = false;
+
+              function executeSearch() {
+                  const query = document.getElementById('searchBox').value.toLowerCase();
+                  const alpha = document.getElementById('alphabetFilter').value;
+                  const container = document.getElementById('resultsArea');
+                  const body = document.getElementById('mainBody');
+
+                  if (query || alpha) body.classList.add('searching');
+                  else {
+                      body.classList.remove('searching');
+                      container.innerHTML = "";
+                      return;
+                  }
+
+                  const filtered = archiveData.filter(item => {
+                      if (!item.A || item.A.length <= 1) return false;
+                      const content = (item.A + " " + (item["Hard disk"] || "")).toLowerCase();
+                      return (!query || content.includes(query)) &&
+                             (!alpha || item.A.toUpperCase().startsWith(alpha));
+                  });
+
+                  if (!filtered.length) {
+                      container.innerHTML = '<div class="no-results">No records found.</div>';
+                      return;
+                  }
+
+                  container.innerHTML = filtered.map(item => {
+                      const lines = (item["Hard disk"] || "").split('\\n')
+                          .map(line => line.trim()).filter(Boolean);
+
+                      return '<div class="item-card">' +
+                          '<div class="item-title">' + escapeHTML(item.A) + '</div>' +
+                          '<div class="path-list">' +
+                          lines.map(line => {
+                              const isPath = line.includes('/') || line.includes('\\\\');
+                              return isPath
+                                  ? '<div class="path-item" data-path="' +
+                                    escapeHTML(line) + '">' + escapeHTML(line) + '</div>'
+                                  : '<div class="drive-label">' + escapeHTML(line) + '</div>';
+                          }).join('') +
+                          '</div></div>';
+                  }).join('');
+              }
+
+              function escapeHTML(value) {
+                  return String(value).replace(/[&<>"']/g, char => ({
+                      '&': '&amp;',
+                      '<': '&lt;',
+                      '>': '&gt;',
+                      '"': '&quot;',
+                      "'": '&#39;'
+                  })[char]);
+              }
+
+              function copyToClipboard(text) {
+                  navigator.clipboard.writeText(text).catch(() => {
+                      prompt("Copy this path:", text);
+                  });
+              }
+
+              document.getElementById('resultsArea').addEventListener('click', event => {
+                  const path = event.target.closest('.path-item');
+                  if (path) copyToClipboard(path.dataset.path);
+              });
+
+              const select = document.getElementById('alphabetFilter');
+              for (let i = 65; i <= 90; i++) {
+                  const char = String.fromCharCode(i);
+                  if (![...select.options].some(option => option.value === char)) {
+                      const option = document.createElement('option');
+                      option.value = char;
+                      option.textContent = char;
+                      select.appendChild(option);
+                  }
+              }
+
+              document.getElementById('searchBox').addEventListener('input', executeSearch);
+              select.addEventListener('change', executeSearch);
+          `;
+
+          // Remove any saved admin login appearance from the offline copy.
+          const toggleButton = htmlClone.querySelector('#modeToggleBtn');
+          if (toggleButton) toggleButton.remove();
+
+          const blob = new Blob(
+              ['<!DOCTYPE html>\\n', htmlClone.outerHTML],
+              { type: 'text/html;charset=utf-8' }
+          );
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'ADC HDD DATABASE.html';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      } catch (error) {
+          console.error("Database download failed:", error);
+          alert("Download failed: " + error.message);
+      } finally {
+          const button = document.getElementById('downloadBtn');
+          if (button) {
+              button.disabled = false;
+              button.textContent = "↓ Download Updated DB";
+          }
+      }
+  }
+
   document.getElementById('alphabetFilter').addEventListener('change', executeSearch);
 </script>
 </body>
